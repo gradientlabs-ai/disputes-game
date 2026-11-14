@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The stack: arcade wells</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/gl-brand/colors_and_type.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer;margin:0}
+</style>
+</helmet>
+<div style="width: 844px; height: 390px; box-sizing: border-box; background: #000000; color: #F8F4EB; font-family: 'Silkscreen', monospace; display: grid; grid-template-columns: 124px minmax(0, 1fr) 130px; overflow: hidden">
+
+  <div style="box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 10px; color: #C7BCA3">Cash</span>
+      <span style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: #FF8933">£31,400</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 10px; color: #C7BCA3">Happy</span>
+      <span style="font-family: 'Press Start 2P', monospace; font-size: 12px">71</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 10px; color: #C7BCA3">Heat</span>
+      <span style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: #F27C71">38%</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 10px; color: #C7BCA3">Day</span>
+      <span style="font-family: 'Press Start 2P', monospace; font-size: 12px">12/40</span>
+    </div>
+    <div style="margin-top: auto; display: flex; gap: 8px">
+      <button aria-label="Pause" style="width: 46px; height: 46px; background: #000000; border: 2px solid #F8F4EB; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0">
+        <span style="width: 5px; height: 16px; background: #F8F4EB"></span>
+        <span style="width: 5px; height: 16px; background: #F8F4EB"></span>
+      </button>
+      <button style="width: 46px; height: 46px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 12px; padding: 0">x2</button>
+    </div>
+  </div>
+
+  <div style="box-sizing: border-box; padding: 10px 4px; display: flex; flex-direction: column; gap: 8px; min-width: 0">
+    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 10px; height: 14px">
+      <span style="display: flex; align-items: center; gap: 7px"><span style="width: 8px; height: 8px; background: #F27C71"></span><span>Review is over the line · 2 late</span></span>
+      <span style="color: #C7BCA3">Cases move left to right</span>
+    </div>
+
+    <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+
+      <div style="display: flex; flex-direction: column; gap: 5px; align-items: stretch">
+        <div style="position: relative; height: 236px; box-sizing: border-box; border: 2px solid #F8F4EB; border-top: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3px 3px">
+          <div aria-hidden="true" style="position: absolute; top: 56px; left: 0; right: 0; border-top: 2px dashed #F27C71"></div>
+          <span style="position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-family: 'Press Start 2P', monospace; font-size: 10px">3</span>
+          <div aria-hidden="true" style="height: 42px; background: repeating-linear-gradient(to top, #FF8933 0 12px, transparent 12px 14px)"></div>
+        </div>
+        <span style="font-size: 10px; text-align: center">Intake</span>
+        <span style="font-size: 9px; text-align: center; color: #C7BCA3">2 agents</span>
+        <div style="display: flex">
+          <button aria-label="Fire one from Intake" style="flex: 1 1 0; height: 44px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">-</button>
+          <button aria-label="Hire one into Intake" style="flex: 1 1 0; height: 44px; margin-left: -2px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">+</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px; align-items: stretch">
+        <div style="position: relative; height: 236px; box-sizing: border-box; border: 2px solid #F8F4EB; border-top: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3px 3px">
+          <div aria-hidden="true" style="position: absolute; top: 56px; left: 0; right: 0; border-top: 2px dashed #F27C71"></div>
+          <span style="position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-family: 'Press Start 2P', monospace; font-size: 10px">2</span>
+          <div aria-hidden="true" style="height: 28px; background: repeating-linear-gradient(to top, #FF8933 0 12px, transparent 12px 14px)"></div>
+        </div>
+        <span style="font-size: 10px; text-align: center">Triage</span>
+        <span style="font-size: 9px; text-align: center; color: #C7BCA3">1 agent</span>
+        <div style="display: flex">
+          <button aria-label="Fire one from Triage" style="flex: 1 1 0; height: 44px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">-</button>
+          <button aria-label="Hire one into Triage" style="flex: 1 1 0; height: 44px; margin-left: -2px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">+</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px; align-items: stretch">
+        <div style="position: relative; height: 236px; box-sizing: border-box; border: 2px solid #F8F4EB; border-top: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3px 3px">
+          <div aria-hidden="true" style="position: absolute; top: 56px; left: 0; right: 0; border-top: 2px dashed #F27C71"></div>
+          <span style="position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-family: 'Press Start 2P', monospace; font-size: 10px">5</span>
+          <div aria-hidden="true" style="height: 70px; background: repeating-linear-gradient(to top, #F27C71 0 12px, transparent 12px 14px)"></div>
+        </div>
+        <span style="font-size: 10px; text-align: center">Fraud</span>
+        <span style="font-size: 9px; text-align: center; color: #C7BCA3">2 agents</span>
+        <div style="display: flex">
+          <button aria-label="Fire one from Fraud" style="flex: 1 1 0; height: 44px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">-</button>
+          <button aria-label="Hire one into Fraud" style="flex: 1 1 0; height: 44px; margin-left: -2px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">+</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px; align-items: stretch">
+        <div style="position: relative; height: 236px; box-sizing: border-box; border: 2px solid #FF8933; border-top: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3px 3px">
+          <span style="position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-family: 'Press Start 2P', monospace; font-size: 10px; color: #F27C71">14</span>
+          <div aria-hidden="true" style="height: 56px; background: repeating-linear-gradient(to top, #F27C71 0 12px, transparent 12px 14px)"></div>
+          <div aria-hidden="true" style="height: 140px; background: repeating-linear-gradient(to top, #FF8933 0 12px, transparent 12px 14px)"></div>
+          <div aria-hidden="true" style="position: absolute; top: 56px; left: 0; right: 0; border-top: 2px dashed #F8F4EB"></div>
+        </div>
+        <span style="font-size: 10px; text-align: center; color: #FF8933; font-weight: 700">Review</span>
+        <span style="font-size: 9px; text-align: center; color: #C7BCA3">3 agents</span>
+        <div style="display: flex">
+          <button aria-label="Fire one from Review" style="flex: 1 1 0; height: 44px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">-</button>
+          <button aria-label="Hire one into Review" style="flex: 1 1 0; height: 44px; margin-left: -2px; background: #FF8933; border: 2px solid #FF8933; color: #000000; font-size: 16px; font-weight: 700; padding: 0">+</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px; align-items: stretch">
+        <div style="position: relative; height: 236px; box-sizing: border-box; border: 2px dashed #C7BCA3; border-top: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3px 3px">
+          <div aria-hidden="true" style="position: absolute; top: 56px; left: 0; right: 0; border-top: 2px dashed #F27C71"></div>
+          <span style="position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-family: 'Press Start 2P', monospace; font-size: 10px">6</span>
+          <div aria-hidden="true" style="height: 84px; background: repeating-linear-gradient(to top, #FF8933 0 12px, transparent 12px 14px)"></div>
+        </div>
+        <span style="font-size: 10px; text-align: center">Sponsor</span>
+        <span style="font-size: 9px; text-align: center; color: #C7BCA3">8 a day</span>
+        <button style="height: 44px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 9px; padding: 0; line-height: 1.5">Faster<br>£2,500</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px; align-items: stretch">
+        <div style="position: relative; height: 236px; box-sizing: border-box; border: 2px solid #F8F4EB; border-top: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3px 3px">
+          <div aria-hidden="true" style="position: absolute; top: 56px; left: 0; right: 0; border-top: 2px dashed #F27C71"></div>
+          <span style="position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-family: 'Press Start 2P', monospace; font-size: 10px">4</span>
+          <div aria-hidden="true" style="height: 56px; background: repeating-linear-gradient(to top, #FFED77 0 12px, transparent 12px 14px)"></div>
+        </div>
+        <span style="font-size: 10px; text-align: center">Complaints</span>
+        <span style="font-size: 9px; text-align: center; color: #C7BCA3">1 agent</span>
+        <div style="display: flex">
+          <button aria-label="Fire one from Complaints" style="flex: 1 1 0; height: 44px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">-</button>
+          <button aria-label="Hire one into Complaints" style="flex: 1 1 0; height: 44px; margin-left: -2px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; font-size: 16px; padding: 0">+</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+    <div style="box-sizing: border-box; border: 2px solid #F8F4EB; padding: 8px; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 10px; color: #C7BCA3">Next</span>
+      <div aria-hidden="true" style="width: 40px; height: 40px; background: repeating-linear-gradient(to top, #FF8933 0 12px, transparent 12px 14px); -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 12px, transparent 12px 14px); mask-image: repeating-linear-gradient(90deg, #000 0 12px, transparent 12px 14px)"></div>
+      <span style="font-size: 10px; line-height: 1.4">Surge in 3 days</span>
+      <span style="font-size: 9px; line-height: 1.4; color: #C7BCA3">New hires take 3 days to ramp up</span>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-family: 'Press Start 2P', monospace; font-size: 10px; color: #FF8933">REVIEW</span>
+      <span style="font-size: 9px; color: #C7BCA3">Hire £500 · fire £300</span>
+      <button style="height: 46px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 10px"><span>2 temps</span><span>£300</span></button>
+      <button style="height: 46px; background: #000000; border: 2px solid #F8F4EB; color: #F8F4EB; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 10px"><span>Upgrade</span><span>£4,000</span></button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":844,"height":390}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

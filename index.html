@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Dispute Factory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap">
+<script>
+// ?errors=1 shows script errors on screen (debug only).
+(function () {
+  if (!/[?&](errors|debug)=1/.test(location.search)) return;
+  var log = window.__errs = [];
+  function paint() {
+    var el = document.getElementById('errs');
+    if (el && log.length) { el.hidden = false; el.textContent = log.join('\n'); }
+  }
+  function show(msg) { log.push(msg); paint(); }
+  window.addEventListener('error', function (e) { show('ERR ' + e.message + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno); });
+  window.addEventListener('unhandledrejection', function (e) { show('REJ ' + (e.reason && e.reason.message || e.reason)); });
+  var ce = console.error; console.error = function () { show('console.error ' + [].join.call(arguments, ' ')); ce.apply(console, arguments); };
+  document.addEventListener('DOMContentLoaded', paint);
+})();
+</script>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<div id="app">
+  <div id="stage" class="n6">
+    <aside id="lrail">
+      <div class="stat"><span class="lbl">Cash</span><b id="h-cash" class="num or">£0</b><small id="h-cash-w" class="warn"></small></div>
+      <div class="stat"><span class="lbl">Happy</span><b id="h-csat" class="num">75</b><i class="bar"><i id="h-csat-bar"></i></i></div>
+      <div class="stat"><span class="lbl">Heat</span><b id="h-heat" class="num">0%</b><i class="bar"><i id="h-heat-bar"></i></i><small id="h-heat-w" class="warn"></small></div>
+      <div class="stat"><span class="lbl">Day</span><b id="h-day" class="num">1/40</b></div>
+      <div class="lbtns">
+        <button id="b-pause" class="sq wide" aria-label="Pause"><span class="pz"><i></i><i></i></span></button>
+        <button id="b-snd" class="sq sm" aria-label="Sound off" aria-pressed="false">Mute</button>
+        <button id="b-hb" class="sq sm" aria-label="Handbook">Book</button>
+      </div>
+    </aside>
+
+    <section id="field">
+      <div id="ticker"><span id="tk-dot"></span><span id="tk-text">Cases move left to right</span></div>
+      <div id="wells">
+        <canvas id="cv"></canvas>
+        <div id="hit"></div>
+        <div id="plus"></div>
+      </div>
+    </section>
+
+    <aside id="rrail">
+      <div id="next">
+        <div id="next-top"><span class="lbl">Next</span><b id="next-when" class="num or"></b></div>
+        <span id="next-name">Quiet week</span>
+        <span id="next-tip" class="mut"></span>
+      </div>
+      <div id="sel">
+        <span id="sel-name" class="num or">INTAKE</span>
+        <div id="sel-stats"><span><i id="sl-a">Staff</i><b id="ss-a">0</b></span><span><i id="sl-q">Queue</i><b id="ss-q">0</b></span><span><i id="sl-b">Busy</i><b id="ss-b">0%</b></span><span><i id="sl-l">Late</i><b id="ss-l">0</b></span></div>
+        <span id="sel-why"></span>
+        <div id="sel-act">
+          <button id="b-fire" class="act"><span>Fire</span><span class="pr"></span></button>
+          <button id="b-temp" class="act"><span>2 temps</span><span class="pr"></span></button>
+          <button id="b-up" class="act"><span>Upgrade</span><span class="pr"></span></button>
+          <button id="b-tier" class="act"><span>Faster tier</span><span class="pr"></span></button>
+        </div>
+      </div>
+    </aside>
+    <div id="edge" aria-hidden="true"></div>
+  </div>
+
+  <div id="rotate">
+    <div class="phone" aria-hidden="true"></div>
+    <p class="num">Rotate your phone</p>
+    <small>Dispute Factory plays in landscape.</small>
+    <button id="rot-go" class="act wide">Play anyway</button>
+  </div>
+  <div id="errs" hidden></div>
+</div>
+<script src="data.js"></script>
+<script src="sim.js"></script>
+<script src="ui-screens.js"></script>
+<script src="ui-play.js"></script>
+</body>
+</html>

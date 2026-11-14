@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dispute Factory: screens harness</title>
+<link rel="stylesheet" href="screens.css">
+<style>
+  body { margin: 0; background: #000; color: #F8F4EB; font: 12px/1.4 ui-monospace, Menlo, monospace; }
+  #dev { padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  #dev button, #dev select, #dev input { font: inherit; background: #000; color: #F8F4EB; border: 2px solid #F8F4EB; min-height: 32px; padding: 0 8px; }
+  #dev input { width: 60px; }
+  #log { padding: 0 10px; white-space: pre-wrap; color: #C7BCA3; }
+  #log .err { color: #F27C71; }
+</style>
+</head>
+<body>
+<div id="dev">
+  <select id="d-diff"><option value="easy">easy</option><option value="medium">medium</option><option value="hard">hard</option></select>
+  <label>days <input id="d-days" type="number" value="40"></label>
+  <label>seed <input id="d-seed" type="number" value="1"></label>
+  <button data-o="title">Title</button>
+  <button data-o="difficulty">Difficulty</button>
+  <button data-o="policy">Policy</button>
+  <button data-o="banner">Banner</button>
+  <button data-o="bannergood">Banner good</button>
+  <button data-o="escalate">Escalate</button>
+  <button data-o="escright">Escalate right</button>
+  <button data-o="escwrong">Escalate wrong</button>
+  <button data-o="handbook">Handbook</button>
+  <button data-o="end">End (run)</button>
+  <button data-o="endcash">End bankrupt</button>
+  <button data-o="endfca">End regulator</button>
+  <button data-o="queue">Queued cards</button>
+  <button id="d-clear">Clear best grades</button>
+</div>
+<div id="log"></div>
+<script>
+// Load data.js/sim.js from v1, falling back to the v0 copies if v1 is missing or broken.
+(function () {
+  const q = new URLSearchParams(location.search);
+  const logEl = document.getElementById('log');
+  window.devLog = (m, err) => { const d = document.createElement('div'); if (err) d.className = 'err'; d.textContent = m; logEl.appendChild(d); (err ? console.error : console.log)('[dev] ' + m); };
+  window.addEventListener('error', e => devLog('error: ' + e.message + ' @ ' + (e.filename || '').split('/').pop() + ':' + e.lineno, true));
+  const load = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('missing ' + src)); document.head.appendChild(s); });
+  const okSim = () => { try { return !!(window.Sim && window.GAMEDATA && window.Sim.create && window.Sim.create({ seed: 1, headless: true })); } catch (e) { devLog('sim create failed: ' + e.message, true); return false; } };
+  async function boot() {
+    let base = q.get('src') === 'v0' ? '../v0/' : './';
+    try { await load(base + 'data.js'); await load(base + 'sim.js'); } catch (e) { devLog(e.message, true); }
+    if (!okSim() && base === './') { devLog('falling back to ../v0/'); base = '../v0/'; window.Sim = undefined; window.GAMEDATA = undefined; await load(base + 'data.js'); await load(base + 'sim.js'); }
+    window.devBase = base;
+    await load('ui-screens.js');
+    devLog('sim from ' + base + ', Screens ' + (window.Screens ? 'ready' : 'MISSING'));
+    window.devReady();
+  }
+  boot();
+})();
+</script>
+<script>
+window.devReady = function () {
+  const q = new URLSearchParams(location.search);
+  const $ = id => document.getElementById(id);
+  if (q.get('diff')) $('d-diff').value = q.get('diff');
+  if (q.get('days')) $('d-days').value = q.get('days');
+  if (q.get('seed')) $('d-seed').value = q.get('seed');
+  const S = window.Sim, D = window.GAMEDATA;
+
+  function makeGame(days, opts) {
+    opts = opts || {};
+    const diff = $('d-diff').value;
+    const policies = opts.policies || { queue: 'edf', credit: 'regulated', risk: 'strict' };
+    const g = S.create({ difficulty: diff, policies, seed: +$('d-seed').value || 1, headless: true });
+    if (!g.difficulty) g.difficulty = diff;
+    if (!g.policies) g.policies = policies;
+    // v0 fallback has no difficulty; use its expansions instead
+    const era = { easy: 1, medium: 2, hard: 3 }[diff];
+    if (S.act.expand && g.era < era) { g.cash += 60000; for (let e = g.era + 1; e <= era; e++) S.act.expand(g, e); g.cash -= 60000; }
+    const correct = opts.wrongAnswers ? false : true;
+    const N = Math.round(days * 50);
+    for (let t = 0; t < N && !g.over; t++) {
+      S.step(g, 0.02);
+      if (opts.bot === 'overhire' && t === 0) for (const id in g.st) { const st = g.st[id]; if (st.def.kind === 'work') for (let i = 0; i < 7; i++) S.act.hire(g, id); }
+      if (t % 50 === 0 && !opts.bot) {
+        for (const id in g.st) {
+          const st = g.st[id];
+          if (!st.unlocked || !(st.def.kind === 'work' || st.def.kind === 'policy')) continue;
+          const can = S.can ? S.can(g, 'hire', id) : st.workers.length < 12;
+          if (can && (st.workers.length === 0 || st.pressure > 2)) S.act.hire(g, id);
+          if (st.workers.length > 2 && st.util < 0.3 && st.queue.length === 0) S.act.fire(g, id);
+        }
+      }
+      if (g.clinic && g.clinic.cur) {
+        const sc = D.CLINIC.find(x => x.id === g.clinic.cur.id);
+        const i = sc ? sc.opts.findIndex(o => !!o.ok === correct) : 0;
+        S.act.answerClinic(g, Math.max(0, i));
+      }
+      g.ev.length = 0;
+    }
+    return g;
+  }
+  const days = () => +$('d-days').value || 0;
+  const done = name => (...a) => devLog(name + ' done ' + JSON.stringify(a));
+  const clickIn = sel => { const b = document.querySelector('#screens ' + sel); if (b) b.click(); return !!b; };
+
+  const OPEN = {
+    title() { Screens.start(done('start')); },
+    difficulty() { Screens.start(done('start')); clickIn('[data-act="go"]'); },
+    policy() { Screens.start(done('start')); clickIn('[data-act="go"]'); clickIn('[data-diff="' + $('d-diff').value + '"]'); },
+    banner() { Screens.banner({ k: 'banner', text: 'BLACK FRIDAY', sub: 'Everyone shops, so everyone disputes. The number of new cases doubles for a week.', tip: 'New hires take three days to get up to speed, so hire before the queues build. Temps start faster.', good: false }, done('banner')); },
+    bannergood() { Screens.banner({ k: 'banner', text: 'Regulator review: clean bill of health', sub: 'Your legal deadlines were met. The regulator gives you a £3,000 grant and your heat falls.', tip: '', good: true }, done('banner')); },
+    escalate(pick) {
+      const g = makeGame(Math.min(days(), 6));
+      const pool = D.CLINIC.filter(c => (c.era || 1) <= (g.era || 1));
+      const sc = pool[(+$('d-seed').value || 0) % pool.length] || D.CLINIC[0];
+      g.clinic.cur = { id: sc.id };
+      Screens.escalate(g, sc.id, done('escalate'));
+      if (pick != null) {
+        const i = sc.opts.findIndex(o => !!o.ok === pick);
+        clickIn('[data-i="' + i + '"]');
+      }
+    },
+    escright() { OPEN.escalate(true); },
+    escwrong() { OPEN.escalate(false); },
+    handbook() { const g = makeGame(days()); Screens.handbook(g, done('handbook')); },
+    end() { const g = makeGame(days()); if (!g.over) g.over = { kind: 'end' }; Screens.end(g, S.score(g), r => { devLog('end cb ' + r); if (r === 'replay') Screens.start(done('start')); }); },
+    endcash() { const g = makeGame(40, { bot: 'overhire' }); if (!g.over || g.over.kind !== 'cash') { devLog('overhire bot did not go bankrupt; forcing'); g.cash = -26000; g.over = { kind: 'cash' }; } Screens.end(g, S.score(g), r => { devLog('end cb ' + r); if (r === 'replay') Screens.start(done('start')); }); },
+    endfca() { const g = makeGame(40, { bot: 'idle' }); if (!g.over || g.over.kind !== 'fca') { devLog('idle bot ended with ' + JSON.stringify(g.over) + '; forcing regulator'); g.heat = 100; g.over = { kind: 'fca' }; } Screens.end(g, S.score(g), r => { devLog('end cb ' + r); if (r === 'replay') Screens.start(done('start')); }); },
+    queue() { OPEN.banner(); OPEN.bannergood(); devLog('isOpen ' + Screens.isOpen()); },
+  };
+  document.querySelectorAll('[data-o]').forEach(b => { b.onclick = () => { try { OPEN[b.dataset.o](); } catch (e) { devLog(b.dataset.o + ': ' + e.stack, true); } }; });
+  $('d-clear').onclick = () => { try { localStorage.removeItem('disputeFactory.v1.best'); localStorage.removeItem('disputeFactory.v1.last'); devLog('cleared'); } catch (e) { devLog('storage blocked'); } };
+  // ?test=1 runs a scripted pass through every screen with keys and clicks
+  async function runTests() {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const key = k => window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+    const view = () => (document.getElementById('screens') || {}).className || '';
+    const res = [];
+    const ok = (name, cond) => { res.push((cond ? 'PASS ' : 'FAIL ') + name); devLog((cond ? 'PASS ' : 'FAIL ') + name, !cond); };
+    let got = null;
+    Screens.start(r => { got = r; });
+    ok('title open', view() === 'sc-title' && Screens.isOpen());
+    ok('focus in card', document.getElementById('screens').contains(document.activeElement));
+    document.body.focus(); key('Enter'); ok('enter -> difficulty', view() === 'sc-diff');
+    key('2'); ok('2 -> policy', view() === 'sc-policy');
+    clickIn('[data-p="credit"][data-v="always"]'); clickIn('[data-p="queue"][data-v="fifo"]');
+    document.activeElement.blur(); key('Enter');
+    ok('begin -> cb', got && got.difficulty === 'medium' && got.policies.credit === 'always' && got.policies.queue === 'fifo' && !Screens.isOpen());
+    let n = 0; OPEN.banner(); Screens.banner({ text: 'Second', sub: 'x' }, () => n++);
+    ok('queued banner keeps open', Screens.isOpen());
+    key('Escape'); ok('first banner closed, second shown', view() === 'sc-banner' && /Second/.test(document.getElementById('screens').textContent));
+    key('Escape'); ok('second banner done', n === 1 && !Screens.isOpen());
+    const g = makeGame(5); const sc = D.CLINIC.find(c => (c.era || 1) <= g.era); g.clinic.cur = { id: sc.id };
+    let ed = 0; const c0 = g.cash; Screens.escalate(g, sc.id, () => ed++);
+    key('2'); ok('escalate answered by key', /sc-result/.test(document.getElementById('screens').innerHTML) && g.clinic.cur === null && g.cash !== c0);
+    document.activeElement.blur(); key('Enter'); ok('escalate done', ed === 1 && !Screens.isOpen());
+    let hd = 0; Screens.handbook(g, () => hd++); key('ArrowDown'); key('Escape'); ok('handbook escape', hd === 1 && !Screens.isOpen());
+    const g2 = makeGame(40); if (!g2.over) g2.over = { kind: 'end' };
+    let ec = null; Screens.end(g2, S.score(g2), r => { ec = r; });
+    ok('end open light', /sc-light/.test(view()));
+    clickIn('[data-act="replay"]'); ok('replay cb', ec === 'replay' && !Screens.isOpen());
+    let got2 = null; Screens.start(r => { got2 = r; });
+    ok('replay opens policy with previous choices', view() === 'sc-policy' && !!document.querySelector('#screens [data-p="credit"][data-v="always"].is-on'));
+    clickIn('[data-act="begin"]'); ok('replay begin', got2 && got2.policies.credit === 'always');
+    let best = null; try { best = JSON.parse(localStorage.getItem('disputeFactory.v1.best')); } catch (e) {}
+    ok('best saved', best && Object.keys(best).length > 0);
+    // every escalation, before and after a wrong answer, must fit without overflow
+    const fits = () => { const f = document.querySelector('#screens .sc-frame'); return f && f.scrollHeight <= f.clientHeight + 1 && f.getBoundingClientRect().bottom <= innerHeight + 1 && f.scrollWidth <= f.clientWidth + 1; };
+    const bad = [];
+    const g3 = makeGame(1);
+    D.CLINIC.forEach(sc => {
+      g3.clinic.cur = { id: sc.id }; Screens.escalate(g3, sc.id, () => {});
+      if (!fits()) bad.push(sc.id + ':ask');
+      const wrong = sc.opts.findIndex(o => !o.ok); clickIn('[data-i="' + wrong + '"]');
+      if (!fits()) bad.push(sc.id + ':result');
+      clickIn('[data-act="ok"]');
+    });
+    ok('all ' + D.CLINIC.length + ' escalations fit ' + innerWidth + 'x' + innerHeight + (bad.length ? ' (' + bad.join(', ') + ')' : ''), !bad.length);
+    const g4 = makeGame(1); g4.hb = new Set(Object.keys(D.HANDBOOK)); Screens.handbook(g4, () => {});
+    const hbBad = [];
+    document.querySelectorAll('#screens .sc-hbitem[data-id]').forEach(b => { if (b.scrollHeight > b.clientHeight + 1) hbBad.push(b.dataset.id); });
+    const ids = Object.keys(D.HANDBOOK);
+    for (const id of ids) { const b = [...document.querySelectorAll('#screens .sc-hbitem[data-id]')].find(x => x.dataset.id === id); if (!b) { clickIn('[data-act="next"]'); } const bb = [...document.querySelectorAll('#screens .sc-hbitem[data-id]')].find(x => x.dataset.id === id); if (bb) { bb.click(); const e = document.querySelector('#screens .sc-hbentry'); if (e.scrollHeight > e.clientHeight + 1) hbBad.push(id + ':body'); if (bb.scrollHeight > bb.clientHeight + 1) hbBad.push(id + ':title'); } }
+    ok('handbook entries fit' + (hbBad.length ? ' (' + hbBad.join(', ') + ')' : ''), !hbBad.length);
+    key('Escape');
+    devLog('TESTS ' + res.filter(r => r.startsWith('PASS')).length + '/' + res.length);
+  }
+  if (q.get('test')) { runTests().catch(e => devLog('test crash ' + e.stack, true)); return; }
+  const o = q.get('open');
+  if (o && OPEN[o]) { try { OPEN[o](); } catch (e) { devLog(o + ': ' + e.stack, true); } }
+};
+</script>
+</body>
+</html>

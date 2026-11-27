@@ -20,6 +20,7 @@ Any modern browser works. On a phone, serve the folder (for example `python3 -m 
 
 - Every team is a well. Cases drop in from the top and stack up; a stack over the dashed coral line is a jam.
 - Tap **+** under a well to hire. Tap a well to select it, then use Fire, 2 temps or Upgrade on the right.
+- Upgrade gives a team new tooling: its agents work twice as fast and make fewer mistakes, for a daily licence.
 - Pick a difficulty (Easy, Medium or Hard) and three locked policies before you start: queue rule, credit policy and risk stance.
 - Lose if cash falls below -£25,000 or regulator heat reaches 100%. Reach day 40 for a grade.
 

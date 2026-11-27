@@ -169,8 +169,10 @@
   }
   const click = sel => { const b = root && root.querySelector(sel); if (b && !b.disabled) { b.click(); return true; } return false; };
   const digit = e => (/^[1-9]$/.test(e.key) ? +e.key : 0);
+  // Fisher-Yates. Math.random is fine here: the seeded sim uses its own generator.
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-  const MARK = '<svg class="sc-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="miter" aria-hidden="true"><rect x="4" y="4" width="56" height="56"></rect><path d="M 4 4 L 60 4 L 32 32 L 32 60"></path></svg>';
+  const MARK = '<svg class="sc-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="miter" aria-hidden="true"><rect x="4" y="4" width="56" height="56"></rect><path d="M 4 32 L 32 32 L 32 60 M 32 32 L 60 4"></path></svg>';
 
   // ------------------------------------------------------------ start: title, difficulty, policies
   let last = null, replayPending = false;
@@ -321,13 +323,16 @@
         + '<h2 class="sc-h2" tabindex="-1">' + esc(sentence(sc.title)) + '</h2>'
         + '<p class="sc-ptext">' + esc(sc.text) + '</p>'
         + '<p class="sc-ask">What do you do?</p><div class="sc-answers">';
-      (sc.opts || []).forEach((o, i) => {
-        h += '<button class="sc-ans" data-i="' + i + '"' + (i === 0 ? ' data-autofocus' : '') + '><span class="sc-key">' + (i + 1) + '</span><span>' + esc(o.t) + '</span></button>';
+      // Shuffle the display order so the right answer is not always in the same slot. data-i keeps the
+      // index into sc.opts that the sim expects; number keys follow what the player sees.
+      const order = shuffle((sc.opts || []).map((o, i) => i));
+      order.forEach((i, pos) => {
+        h += '<button class="sc-ans" data-i="' + i + '" data-pos="' + (pos + 1) + '"' + (pos === 0 ? ' data-autofocus' : '') + '><span class="sc-key">' + (pos + 1) + '</span><span>' + esc(sc.opts[i].t) + '</span></button>';
       });
       h += '</div></div>';
       show('escalate', h, e => {
         const n = digit(e);
-        if (n && n <= (sc.opts || []).length) return click('[data-i="' + (n - 1) + '"]');
+        if (n && n <= order.length) return click('[data-pos="' + n + '"]');
         return false;
       });
       root.querySelectorAll('[data-i]').forEach(b => { b.onclick = () => answer(g, sc, +b.dataset.i, done); });

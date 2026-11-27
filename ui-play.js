@@ -485,7 +485,7 @@
     if (err > 0.16) return [Math.round(err * 100) + '% of work is redone. ' + (s.tech ? 'Stress and temps add errors.' : 'An upgrade cuts errors.'), 'go'];
     if (n > 2 && q === 0 && s.util < 0.35) return ['Mostly idle at ' + fmt(g.wage || C.WAGE) + ' a day each. Fire one?', 'go'];
     if (ramp) return [ramp + ' new hire' + (ramp > 1 ? 's' : '') + ' getting up to speed.', ''];
-    return ['Keeping up.', 'lu'];
+    return [s.tech >= 1 ? 'Keeping up.' : 'Keeping up. Upgrade to work ' + upSpeed() + '.', 'lu'];
   }
   function updatePanel() {
     const s = g.st[selected]; if (!s) return;
@@ -521,6 +521,10 @@
     show('b-fire', !ext, 'Fire', shortMoney(C.FIRE), can('fire', selected));
     show('b-temp', !ext && !!d.outsource, '2 temps', shortMoney((C.TEMP_SETUP || 0) * 2), can('outsource', selected));
     show('b-up', !ext, up ? 'Upgraded' : 'Upgrade', up ? '' : shortMoney(priceUp(s)), !up && can('upgrade', selected));
+    if (!ext) {
+      const upTip = up ? (d.upgrade ? d.upgrade + ' installed. ' : '') + upBlurb() : 'Upgrade ' + fmt(priceUp(s)) + (d.upgrade ? ': ' + d.upgrade.toLowerCase() : '') + '. ' + upBlurb();
+      if ($('b-up').title !== upTip) { $('b-up').title = upTip; $('b-up').setAttribute('aria-label', upTip); }
+    }
     const tierMax = Array.isArray(C.SPONSOR_COST) && (g.sponsorTier || 0) >= C.SPONSOR_COST.length;
     show('b-tier', selected === 'SPONSOR', tierMax ? 'Top tier' : 'Faster tier', tierMax ? '' : shortMoney(priceTier()), !tierMax && can('sponsor', selected));
   }
@@ -538,8 +542,9 @@
   }
   function coachTick(t) {
     coach.target = null; coach.msg = '';
-    if (coach.done || g.over) return;
-    if (coach.hits >= 4 || g.t >= 10) { coach.done = true; return; }
+    if (g.over) return;
+    if (!coach.done && (coach.hits >= 4 || g.t >= 10)) coach.done = true;
+    if (coach.done) { upgradeHint(t); if (coach.tempMsg && t < coach.tempUntil) coach.msg = coach.tempMsg; return; }
     if (coach.tempMsg && t < coach.tempUntil) { coach.msg = coach.tempMsg; }
     let best = null, bv = 0;
     for (const o of wells) { const v = needHire(o.id); if (v > bv) { bv = v; best = o.id; } }
@@ -559,6 +564,19 @@
     if (RISK_HINT() && !coach.once.risk) { coach.once.risk = true; coach.tempMsg = 'Merchant risk has no stack: hire 2 or 3 there to cover your shops.'; coach.tempUntil = t + 5000; }
   }
   const RISK_HINT = () => g.st.RISK && !g.st.RISK.workers.length && g.t > 1.5;
+  // What Upgrade buys, in words, so players know it is more than a cosmetic: faster agents, fewer mistakes,
+  // and a daily licence on top of the one-off price.
+  const upSpeed = () => { const x = C.UP_SPEED || 2; return x === 2 ? 'twice as fast' : Math.round((x - 1) * 100) + '% faster'; };
+  const upBlurb = () => 'Agents work ' + upSpeed() + ' and make fewer mistakes. Adds ' + fmt(C.UP_LIC || 0) + ' a day.';
+  // One-off tip, after the hiring coach has finished, the first time the selected team could be upgraded.
+  function upgradeHint(t) {
+    if (coach.off || coach.once.upgrade) return;
+    const s = g.st[selected];
+    if (!s || !staffed(s) || !s.workers.length || s.tech >= 1 || !can('upgrade', selected)) return;
+    coach.once.upgrade = true;
+    coach.tempMsg = 'Upgrade a team: its agents work ' + upSpeed() + ' and make fewer mistakes, for ' + fmt(C.UP_LIC || 0) + ' a day.';
+    coach.tempUntil = t + 7000;
+  }
   function coachHire(id, t) {
     if (coach.done) return;
     if (id === coach.target) {
@@ -743,6 +761,7 @@
     if (ok) {
       const f = wellFx[id]; if (f && (kind === 'hire' || kind === 'temps' || kind === 'upgrade')) f.pulse = now();
       if (kind === 'hire' || kind === 'temps') coachHire(id, now());
+      if (kind === 'upgrade') { coach.once.upgrade = true; ticker(s.def.name + ' upgraded: agents work ' + upSpeed() + ' with fewer mistakes', 'good', true); }
       flashBtn(kind);
       Snd.play(kind === 'fire' ? 'fire' : kind === 'upgrade' || kind === 'sponsor' ? 'up' : 'hire');
       try { navigator.vibrate && navigator.vibrate(8); } catch (e) { /* unsupported */ }
@@ -803,7 +822,7 @@
     stage.classList.remove('hide');
     layoutWells();
     Snd.play('start');
-    coach.hits = 0; coach.done = !!Q.get('nocoach'); coach.once = {}; coach.tempMsg = ''; coach.target = null; coach.msg = '';
+    coach.hits = 0; coach.off = !!Q.get('nocoach'); coach.done = coach.off; coach.once = {}; coach.tempMsg = ''; coach.target = null; coach.msg = '';
     warned.heat50 = false; warned.cash = false;
     window.__game = { g, S, D };
     lastT = now();
